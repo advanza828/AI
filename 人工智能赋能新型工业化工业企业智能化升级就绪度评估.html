@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>工业企业智能化就绪度自评估工具 | 全部展开 · 漏选验证</title>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #eef2f7;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            padding: 1.5rem;
+            color: #1a2c3e;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0a2b3e, #134b6b);
+            color: white;
+            border-radius: 2rem;
+            padding: 1.5rem 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+        }
+
+        .header p {
+            opacity: 0.85;
+            font-size: 0.95rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+            overflow: hidden;
+            border: 1px solid #e2e9f0;
+        }
+
+        .card-header {
+            background: #f8fafd;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e2e9f0;
+            font-weight: 700;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .card-header i {
+            color: #2c7da0;
+            font-size: 1.3rem;
+        }
+
+        .card-body {
+            padding: 1.2rem 1.5rem;
+        }
+
+        .subdomain-block {
+            border: 1px solid #e9edf2;
+            border-radius: 1rem;
+            margin-bottom: 1.5rem;
+            background: #ffffff;
+        }
+
+        .subdomain-title {
+            background: #f9fbfe;
+            padding: 0.75rem 1rem;
+            font-weight: 700;
+            border-bottom: 1px solid #e9edf2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .level-requirements {
+            padding: 1rem;
+            background: #fff;
+        }
+
+        .level-group {
+            margin-bottom: 1.2rem;
+            border-left: 3px solid #cbdde9;
+            padding-left: 1rem;
+        }
+
+        .level-badge {
+            display: inline-block;
+            background: #eef3fc;
+            padding: 0.2rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 0.6rem;
+        }
+
+        .requirement-item {
+            margin: 0.6rem 0;
+            font-size: 0.85rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            gap: 0.8rem;
+            background: #fefefe;
+            padding: 0.5rem 0.3rem;
+            border-bottom: 1px dashed #eef2f7;
+        }
+
+        .req-text {
+            flex: 2;
+            min-width: 180px;
+            color: #2c3e4e;
+        }
+
+        .rating-group {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+
+        .rating-group label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.2rem;
+            font-size: 0.75rem;
+            background: #f0f4f9;
+            padding: 0.2rem 0.6rem;
+            border-radius: 30px;
+            cursor: pointer;
+        }
+
+        input[type="radio"] {
+            margin: 0;
+            accent-color: #2c7da0;
+        }
+
+        .btn-evaluate {
+            background: #1e6f5c;
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 3rem;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 0.5rem;
+        }
+
+        .btn-evaluate:hover {
+            background: #0f5a48;
+            transform: scale(1.01);
+        }
+
+        .result-card {
+            background: #f1f9fe;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .level-result {
+            font-size: 2rem;
+            font-weight: 800;
+        }
+
+        .flex-chart {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        canvas {
+            max-height: 280px;
+            max-width: 100%;
+        }
+
+        .weight-hint {
+            font-size: 0.7rem;
+            color: #5f7f9c;
+            margin-top: 0.5rem;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 2rem;
+            font-size: 0.7rem;
+            color: #6c8eaa;
+        }
+
+        @media (max-width: 700px) {
+            body { padding: 0.8rem; }
+            .requirement-item { flex-direction: column; }
+        }
+
+        .summary-score {
+            background: #e6f4ea;
+            border-radius: 1rem;
+            padding: 0.8rem;
+            margin-top: 1rem;
+        }
+
+        button.submit-all {
+            background: #2c7da0;
+            width: 100%;
+            padding: 0.9rem;
+            font-size: 1.1rem;
+        }
+
+        .error-missing {
+            color: #d9534f;
+            font-size: 0.8rem;
+            background: #f8d7da;
+            border-radius: 12px;
+            padding: 8px 12px;
+            margin-top: 12px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1><i class="fas fa-chalkboard-user"></i> 工业企业智能化就绪度自评估工具</h1>
+        <p>基于《人工智能赋能新型工业化 工业企业智能化升级就绪度评估》报批稿 · <strong style="color:#ffd966;">所有评估项均为必选</strong>，请逐项评分，漏选将无法提交并提示</p>
+        <div style="margin-top: 8px;"><i class="fas fa-check-circle"></i> 每个要求选择“满足程度”：全部满足(1分) | 超半数满足(0.8分) | 部分满足(0.5分) | 不满足(0分)</div>
+    </div>
+
+    <div id="survey-container"></div>
+
+    <div style="display: flex; justify-content: center; margin: 1rem 0 2rem;">
+        <button class="btn-evaluate submit-all" id="evaluateBtn"><i class="fas fa-chart-line"></i> 提交评估 · 计算就绪度等级</button>
+    </div>
+
+    <div id="resultArea" class="result-card" style="display: none;">
+        <h3><i class="fas fa-chart-pie"></i> 评估结果</h3>
+        <div class="flex-chart">
+            <div style="flex:1">
+                <canvas id="radarChart" width="400" height="300" style="max-width:100%; height:auto"></canvas>
+            </div>
+            <div style="flex:1">
+                <div id="levelText" class="level-result"></div>
+                <div id="scoreDetail"></div>
+                <div id="recommend" style="margin-top:12px; background:#fff; padding:10px; border-radius:1rem;"></div>
+            </div>
+        </div>
+    </div>
+    <footer>评估方法：每个能力子域下各等级要求独立评分，计算该等级算术平均分，累计各等级加权总分，判定就绪度等级(L1~L5)。权重采用能力域等权(各25%)，子域等权(域内平均)。所有评估项均为必选。</footer>
+</div>
+
+<script>
+    // ======================= 依据标准文档整理的结构化数据 =======================
+    const assessmentData = {
+        "资源": {
+            "算力": {
+                levels: {
+                    L1: ["在具体场景中体现人工智能算力基础设施建设方案；能提供算力基础设施配置清单。"],
+                    L2: ["部门内具备小型算力基础设施，制定管理细则；制定了算力基础设施相关数据和配置的备份与恢复策略。"],
+                    L3: ["企业范围内统一人工智能算力基础设施，统一管理细则；基础设施能根据不同业务优先级智能分配资源；算力基础设施具有高兼容性，适配不同软硬件。"],
+                    L4: ["具备算力基础设施持续建设能力；对资源使用效率量化评估并优化；设计和运营中考虑绿色环保与可持续发展。"],
+                    L5: ["具备分布式基础设施配置优化和共享机制；具备大规模人工智能基础设施运营能力，对行业上下游提供服务；成为行业标杆。"]
+                }
+            },
+            "数据": {
+                levels: {
+                    L1: ["在具体场景中初步进行结构化和非结构化数据采集与集成。"],
+                    L2: ["部门内建立数据管理平台，完成采集存储处理统一管理；建立数据血缘及追溯机制，实现样本级追溯。"],
+                    L3: ["企业内完成核心业务数据整合，建设数据集；建立统一数据管理平台；开展数据资产价值评估；具备数据管理人员。"],
+                    L4: ["建立可量化评估指标体系，准确测量数据管理效率并优化；建立数据智能工具管理办法，实现智能分析；完善数据风险管理体系；严格数据隐私保护；建立企业级数据标注和质量管控体系，识别修正偏差。"],
+                    L5: ["引导行业伙伴构建高质量数据集，覆盖关键环节；构建跨产业链数据空间，保障数据主权下安全协作；业界分享最佳实践，成为行业标杆。"]
+                }
+            },
+            "知识": {
+                levels: {
+                    L1: ["在具体场景中对知识进行数字化记录；应用存储的知识解决问题。"],
+                    L2: ["部门内整合智能化升级所需知识资源，建立知识图谱；建立定期知识更新机制。"],
+                    L3: ["企业范围内统一整合管理知识资源，建设统一知识平台；制定知识应用指导，提供导航和推荐服务。"],
+                    L4: ["建立专家系统，拥有知识绩效量化评价模型。"],
+                    L5: ["实现行业智能化升级所需知识在上下游生态中协同共享；创新引领知识管理新模式，实现知识重组再造；具备联邦学习等隐私计算能力，联合训练优化模型。"]
+                }
+            },
+            "算法模型": {
+                levels: {
+                    L1: ["在具体场景中反映算法模型的管理、选型与应用等内容。"],
+                    L2: ["部门内完成关键场景算法模型集成整合；完成某一场景个性化算法模型定制；建立人工智能算法模型管理平台，支持训练、存储、版本控制、参数调整等。"],
+                    L3: ["企业范围内建立统一人工智能算法模型管理平台，具有扩展性和兼容性；基于内部数据训练或优化形成行业大模型或场景大模型。"],
+                    L4: ["建立成熟算法模型风险管理体系；建立算法模型性能、效率、兼容性量化指标并持续优化；实时监控模型，定期审查；建立MLOps体系，实现自动化流水线，缩短迭代周期。"],
+                    L5: ["企业建立算法模型开源共享机制；与行业伙伴紧密合作，推动算法模型在实际业务中共享应用，成为业界最佳实践。"]
+                }
+            },
+            "人才": {
+                levels: {
+                    L1: ["在具体场景中反映人工智能技术及管理人才选拔等内容。"],
+                    L2: ["部门内明确人工智能技术及管理人才选拔方式和晋升途径。"],
+                    L3: ["企业范围内设定统一的人工智能人才选拔、培养、交流和晋升制度；制定适宜的人才培训课程；建立人才培养跟踪和评估机制。"],
+                    L4: ["对人才培养过程量化分析并及时优化；企业具备人工智能课程开发能力和人才培训能力，帮助行业上下游建设人才储备。"],
+                    L5: ["打造具有影响力的人工智能工程师认证体系，吸引开发者学习认证；业界分享最佳实践，成为行业标杆。"]
+                }
+            },
+            "资金": {
+                levels: {
+                    L1: ["在具体场景中反映智能化建设资金投入。"],
+                    L2: ["部门内安排专项资金计划支持智能化升级需求；设立智能化升级专项资金管理措施。"],
+                    L3: ["企业范围内安排专项资金，并设置统一管理措施。"],
+                    L4: ["对智能化升级资金进行动态协同管理和量化精准核算；建立资金保障管理制度并持续优化改进。"],
+                    L5: ["建立智能化升级生态建设相关资金预算；针对生态相关资金建立独立管控与审计体系。"]
+                }
+            }
+        },
+        "应用": {
+            "研发设计": {
+                levels: {
+                    L1: ["基于信息技术实现需求管理和跟踪；支持产品设计过程追溯、数据或文档结构化管理、版本控制及共享。"],
+                    L2: ["产品的一部分内容实现智能化辅助设计。"],
+                    L3: ["建立敏捷设计环境，支持不同类型产品的参数化、模块化设计；将设计信息、生产信息、检验信息等集成于数字化模型中，实现基于模型的数据归档管理。"],
+                    L4: ["建立产品设计平台，支持用户、供应商多方协同设计和产品创新；设计系统与物流、供应链、营销、运维集成，实现全生命周期设计优化。"],
+                    L5: ["基于生成式人工智能实现产品的快速设计；产品设计平台支撑产业链其他企业完成设计。"]
+                }
+            },
+            "生产作业": {
+                levels: {
+                    L1: ["生产作业主要依赖基础自动化设备和手动操作；部署数据采集监控系统支撑作业监控和故障报警。"],
+                    L2: ["在某一产线实现全产线智能化排产与作业。"],
+                    L3: ["建成生产执行系统(MES)和企业资源规划(ERP)系统，实现生产数据集成和部分流程自动化管理。"],
+                    L4: ["建成生产作业系统，实现高度自动化和智能化，能根据市场需求和资源状况动态调整；支持预测性维护和实时优化策略，显著提高效率降低成本。"],
+                    L5: ["生产作业系统能够支撑产业链上下游协同。"]
+                }
+            },
+            "供应物流": {
+                levels: {
+                    L1: ["基于人工及基础数字化技术实现仓储物流配送；开始整合库存信息。"],
+                    L2: ["库存信息与物流信息交互，能够基于物流信息实现智能更新。"],
+                    L3: ["建成仓储系统，依据生产作业计划实现半自动或自动出入库与物流管理。"],
+                    L4: ["仓储物流系统具备与ERP、SCM、MES集成能力；能预测仓储能力，对生产与物流计划反馈。"],
+                    L5: ["仓储物流系统能够支撑产业链上下游供应链管理。"]
+                }
+            },
+            "智能客服": {
+                levels: {
+                    L1: ["覆盖1-2个核心业务场景；依赖规则引擎，无多轮对话；规则人工更新。"],
+                    L2: ["覆盖3-5个业务场景；引入基础NLP模型，支持多轮对话；支持客服团队自助更新话术。"],
+                    L3: ["覆盖5-10个全链路场景；采用成熟NLP与知识图谱，支持上下文理解与用户行为预测；建立数据闭环，自动迭代优化。"],
+                    L4: ["覆盖全业务场景；采用企业级大模型，多模态交互，自学习能力；构建企业级知识中台，知识自动生成、更新、分发；全自动化迭代。"],
+                    L5: ["能力封装为定制化解决方案，适配多行业场景；平台化多租户部署；建立行业知识库，多组织协同；行业化运营团队持续迭代。"]
+                }
+            },
+            "能耗管理": {
+                levels: {
+                    L1: ["部署基础能耗监测系统，对多设备进行实时数据采集。"],
+                    L2: ["运用智能算法对能耗数据分析预测；建立能耗预警规则，超过阈值报警。"],
+                    L3: ["建立智能能耗管理系统，精准预测设备故障隐患和潜在安全风险；建立智能能耗预警模型提前预警风险。"],
+                    L4: ["完成智能能耗管理系统与生产管理等系统集成，实现能耗管理策略动态调整。"],
+                    L5: ["探索和实施节能新技术、新方案；成为行业能耗管理标杆。"]
+                }
+            },
+            "协同办公": {
+                levels: {
+                    L1: ["使用基本办公软件实现部门内文件共享和简单协作。"],
+                    L2: ["部门层级部署协同办公软件，高效共享与分类管理；建立信息推送和提醒功能。"],
+                    L3: ["部署企业级协同办公平台，跨部门集中存储便捷共享，多人在线编辑；利用人工智能助手优化流程。"],
+                    L4: ["协同办公平台与企业业务系统深度集成，实现业务流程和办公流程无缝对接；通过虚拟团队协作打破地域限制。"],
+                    L5: ["引领行业协同办公智能化发展，成为行业标杆案例。"]
+                }
+            },
+            "销售售后": {
+                levels: {
+                    L1: ["通过简单记录方式管理客户售后问题，处理效率较低。"],
+                    L2: ["引入基础售后管理系统，电子化记录初步分类；建立多渠道客户反馈机制，实时响应。"],
+                    L3: ["售后管理系统具备智能分析能力，挖掘反馈潜在需求；基于客户历史提供个性化服务；利用AI客服机器人24/7在线服务。"],
+                    L4: ["构建预测性售后服务模型，主动提供维护建议；结合购买历史实施智能化售后服务；与供应商建立智能协同售后网络。"],
+                    L5: ["打造智能售后生态系统，整合全产业链资源，为客户提供一站式智能售后服务；引领行业售后智能化发展。"]
+                }
+            },
+            "安全生产": {
+                levels: {
+                    L1: ["安装部分安全监测设备，引入简单算法对明显异常有限预警。"],
+                    L2: ["部署智能化安全监测设备，运用图像识别识别违规操作；建立设备故障预测模型提前发现部分问题。"],
+                    L3: ["建立企业统一智能安全检测系统；利用AI实现安全监测设备智能巡检和自动校准；建立智能安全决策支持系统。"],
+                    L4: ["利用人工智能实现对安全管理制度执行情况的智能监督和评估。"],
+                    L5: ["引领行业安全生产标准制定和创新实践；成为行业安全生产标杆。"]
+                }
+            }
+        },
+        "管理": {
+            "战略规划": {
+                levels: {
+                    L1: ["在具体场景中反映了人工智能的管理目标和范围。"],
+                    L2: ["部门内明确了人工智能应用与管理系统；制定了反映业务发展需求的战略；识别人工智能战略利益干系人。"],
+                    L3: ["企业范围内制定了统一人工智能战略；制定了战略管理制度和流程，明确职责；将战略形成文件并按标准过程发布、维护、审查修订。"],
+                    L4: ["对组织规划人工智能战略的管理过程进行量化分析并及时优化；制定体系化人工智能战略能力框架，支撑细化实施。"],
+                    L5: ["人工智能战略有效提升组织竞争力；业界分享最佳实践，成为行业标杆。"]
+                }
+            },
+            "治理组织": {
+                levels: {
+                    L1: ["在具体场景中反映人工智能管理的角色及职责。"],
+                    L2: ["部门内设置人工智能管理团队，岗位职责明确。"],
+                    L3: ["企业明确统一的人工智能管理部门，负责组织协调；建立健全人工智能责任体系，覆盖管理、业务和技术人员；建立评价标准和奖惩制度。"],
+                    L4: ["建立量化绩效评估指标，发布考核结果；明确职业晋升路线，帮助团队明确发展目标。"],
+                    L5: ["业界分享最佳实践，成为行业标杆。"]
+                }
+            },
+            "AI系统生存周期": {
+                levels: {
+                    L1: ["在具体场景中反映人工智能系统开发需求及初步管理。"],
+                    L2: ["部门内建立了人工智能系统需求、设计、测试、部署的基本流程文档。"],
+                    L3: ["企业范围内建立统一的AI系统生存周期管理规范，覆盖需求、设计、开发、测试、部署、运维全过程。"],
+                    L4: ["对生存周期各阶段进行量化度量，建立自动化CI/CD/CT流水线，支持快速迭代。"],
+                    L5: ["形成行业最佳实践，主导AI系统生存周期相关标准制定，赋能生态伙伴。"]
+                }
+            },
+            "安全可信": {
+                levels: {
+                    L1: ["在具体场景中反映人工智能安全风险意识及初步防范。"],
+                    L2: ["部门内建立了人工智能系统安全管理制度，包含访问控制、数据安全基础措施。"],
+                    L3: ["企业统一制定人工智能安全可信策略，涵盖风险识别、隐私保护、算法鲁棒性要求，定期开展安全评估。"],
+                    L4: ["建立量化安全指标监控体系，实现安全事件的智能检测与响应；具备自主创新安全技术。"],
+                    L5: ["引领行业人工智能安全标准制定，输出安全可信解决方案，成为行业标杆。"]
+                }
+            }
+        },
+        "效益": {
+            "降本": {
+                levels: {
+                    L1: ["部分场景对人力、原材料等成本简单记录，未形成有效优化机制。"],
+                    L2: ["单个部门建立成本智能管理系统，实现该环节生产成本降低。"],
+                    L3: ["建立企业统一的成本管理系统，在多环节实现联动成本降低；成本系统与生产经营集成，实时监控成本数据。"],
+                    L4: ["企业成本大幅降低；能精确评估成本降低措施效果并持续优化策略。"],
+                    L5: ["成为行业生产成本控制标杆；带动上下游产业链共同降低生产成本。"]
+                }
+            },
+            "提质": {
+                levels: {
+                    L1: ["部分场景对产品质量监测分析，未形成智能分析机制。"],
+                    L2: ["单个部门建立产品质量智能分析系统，对该环节质量优化给出方案，实现辅助决策。"],
+                    L3: ["建立企业统一的产品质量优化系统，推动质量管理体系智能化升级。"],
+                    L4: ["企业产品质量大幅提升；能预测产品市场份额、消费者行为偏好，调整产品战略。"],
+                    L5: ["成为行业产品质量提升标杆；分享经验带动行业共同提升。"]
+                }
+            },
+            "增效": {
+                levels: {
+                    L1: ["部分场景对人力、生产效率简单记录，未形成优化机制。"],
+                    L2: ["单个环节使用效率优化智能系统，实现该环节效率增长。"],
+                    L3: ["建立企业统一的效率分析管理系统，多环节联动效率优化；系统与生产运营集成，智能化给出优化方案。"],
+                    L4: ["企业生产经营效率大幅提高；精确评估全环节优化方案，辅助人工决策。"],
+                    L5: ["成为行业效率优化标杆；带动上下游企业共同提高效率。"]
+                }
+            },
+            "绿色发展": {
+                levels: {
+                    L1: ["部分场景利用数据分析和预测技术帮助降低能源消耗。"],
+                    L2: ["单个部门建立能源管理系统，实现该环节节能降耗。"],
+                    L3: ["建立企业统一节能降耗分析管理系统，多环节联动节能；系统与生产经营联动降低成本。"],
+                    L4: ["企业能耗大幅降低；精确评估节能降耗措施效果并持续降低能耗。"],
+                    L5: ["成为行业节能降耗标杆；分享先进降耗技术带动产业链绿色生产。"]
+                }
+            }
+        }
+    };
+
+    // 构建问卷：全部展开，每个要求项不再显示额外标记
+    function buildSurvey() {
+        const container = document.getElementById('survey-container');
+        container.innerHTML = '';
+        for (let domain in assessmentData) {
+            const domainCard = document.createElement('div');
+            domainCard.className = 'card';
+            const header = document.createElement('div');
+            header.className = 'card-header';
+            header.innerHTML = `<i class="fas fa-folder-open"></i> ${domain}能力域`;
+            const bodyDiv = document.createElement('div');
+            bodyDiv.className = 'card-body';
+            domainCard.appendChild(header);
+            domainCard.appendChild(bodyDiv);
+
+            for (let sub in assessmentData[domain]) {
+                const subBlock = document.createElement('div');
+                subBlock.className = 'subdomain-block';
+                const subTitle = document.createElement('div');
+                subTitle.className = 'subdomain-title';
+                subTitle.innerHTML = `<span><strong>${sub}</strong></span>`;
+                const reqDiv = document.createElement('div');
+                reqDiv.className = 'level-requirements';
+                const levels = assessmentData[domain][sub].levels;
+                const levelOrder = ['L1', 'L2', 'L3', 'L4', 'L5'];
+                for (let lvl of levelOrder) {
+                    if (!levels[lvl]) continue;
+                    const group = document.createElement('div');
+                    group.className = 'level-group';
+                    const badge = document.createElement('div');
+                    badge.className = 'level-badge';
+                    badge.innerText = lvl;
+                    group.appendChild(badge);
+                    levels[lvl].forEach((reqText, idx) => {
+                        const reqItem = document.createElement('div');
+                        reqItem.className = 'requirement-item';
+                        const reqSpan = document.createElement('div');
+                        reqSpan.className = 'req-text';
+                        reqSpan.innerText = reqText;
+                        const radioGroup = document.createElement('div');
+                        radioGroup.className = 'rating-group';
+                        const options = [
+                            { val: 1, label: '全部满足' },
+                            { val: 0.8, label: '超半数满足' },
+                            { val: 0.5, label: '部分满足' },
+                            { val: 0, label: '不满足' }
+                        ];
+                        const name = `${domain}|${sub}|${lvl}|${idx}`;
+                        options.forEach(opt => {
+                            const label = document.createElement('label');
+                            const radio = document.createElement('input');
+                            radio.type = 'radio';
+                            radio.name = name;
+                            radio.value = opt.val;
+                            label.appendChild(radio);
+                            label.appendChild(document.createTextNode(opt.label));
+                            radioGroup.appendChild(label);
+                        });
+                        reqItem.appendChild(reqSpan);
+                        reqItem.appendChild(radioGroup);
+                        group.appendChild(reqItem);
+                    });
+                    reqDiv.appendChild(group);
+                }
+                subBlock.appendChild(subTitle);
+                subBlock.appendChild(reqDiv);
+                bodyDiv.appendChild(subBlock);
+            }
+            container.appendChild(domainCard);
+        }
+    }
+
+    // 检查所有必选项是否已选，返回缺失项列表
+    function getMissingItems() {
+        const missing = [];
+        const allRadios = document.querySelectorAll('input[type="radio"]');
+        const nameSet = new Set();
+        allRadios.forEach(radio => { nameSet.add(radio.name); });
+        for (let name of nameSet) {
+            const checked = document.querySelector(`input[name="${name}"]:checked`);
+            if (!checked) {
+                const parts = name.split('|');
+                if (parts.length === 4) {
+                    const domain = parts[0];
+                    const sub = parts[1];
+                    const level = parts[2];
+                    const reqIdx = parseInt(parts[3]);
+                    const reqText = assessmentData[domain]?.[sub]?.levels?.[level]?.[reqIdx];
+                    missing.push({
+                        domain, sub, level,
+                        text: reqText || `要求 ${level}-${reqIdx+1}`,
+                        name: name
+                    });
+                } else {
+                    missing.push({ name, text: '未命名要求' });
+                }
+            }
+        }
+        return missing;
+    }
+
+    // 获取所有评分
+    function calculateScores() {
+        let rawScores = {};
+        for (let domain in assessmentData) {
+            rawScores[domain] = {};
+            for (let sub in assessmentData[domain]) {
+                rawScores[domain][sub] = { L1: null, L2: null, L3: null, L4: null, L5: null };
+                const levels = ['L1', 'L2', 'L3', 'L4', 'L5'];
+                for (let lvl of levels) {
+                    const reqs = assessmentData[domain][sub].levels[lvl];
+                    if (!reqs) continue;
+                    let sum = 0, count = 0;
+                    for (let idx = 0; idx < reqs.length; idx++) {
+                        const radioName = `${domain}|${sub}|${lvl}|${idx}`;
+                        const selected = document.querySelector(`input[name="${radioName}"]:checked`);
+                        if (selected) {
+                            sum += parseFloat(selected.value);
+                            count++;
+                        } else {
+                            // 漏选不会进入此分支（因为提交前已拦截），但防御性处理
+                            sum += 0;
+                            count++;
+                        }
+                    }
+                    const avg = count > 0 ? sum / count : 0;
+                    rawScores[domain][sub][lvl] = avg;
+                }
+            }
+        }
+        return rawScores;
+    }
+
+    function computeTotalGrade(scores) {
+        const domains = ['资源', '应用', '管理', '效益'];
+        const domainWeight = 0.25;
+        let levelTotalScore = { L1: 0, L2: 0, L3: 0, L4: 0, L5: 0 };
+        for (let domain of domains) {
+            let subList = Object.keys(assessmentData[domain]);
+            let subWeight = 1.0 / subList.length;
+            for (let lvl of ['L1', 'L2', 'L3', 'L4', 'L5']) {
+                let domainLevelSum = 0;
+                for (let sub of subList) {
+                    let subScore = (scores[domain][sub][lvl] !== undefined && scores[domain][sub][lvl] !== null) ? scores[domain][sub][lvl] : 0;
+                    domainLevelSum += subScore * subWeight;
+                }
+                levelTotalScore[lvl] += domainLevelSum * domainWeight;
+            }
+        }
+        let finalScore = levelTotalScore.L1 + levelTotalScore.L2 + levelTotalScore.L3 + levelTotalScore.L4 + levelTotalScore.L5;
+        let grade = "";
+        if (finalScore >= 4) grade = "L5 推广级";
+        else if (finalScore >= 3) grade = "L4 企业级";
+        else if (finalScore >= 2) grade = "L3 协同级";
+        else if (finalScore >= 1) grade = "L2 应用级";
+        else grade = "L1 起始级";
+        return { finalScore, grade, levelDetails: levelTotalScore };
+    }
+
+    function renderRadar(scores) {
+        const domains = ['资源', '应用', '管理', '效益'];
+        const domainScores = {};
+        for (let d of domains) {
+            let total = 0;
+            let subCount = Object.keys(assessmentData[d]).length;
+            for (let sub in assessmentData[d]) {
+                let subAvg = 0;
+                let cnt = 0;
+                for (let lvl of ['L1', 'L2', 'L3', 'L4', 'L5']) {
+                    let val = scores[d][sub][lvl];
+                    if (val !== undefined) { subAvg += val; cnt++; }
+                }
+                let finalSub = cnt > 0 ? subAvg / cnt : 0;
+                total += finalSub;
+            }
+            domainScores[d] = subCount > 0 ? total / subCount : 0;
+        }
+        const ctx = document.getElementById('radarChart').getContext('2d');
+        if (window.radarChartInstance) window.radarChartInstance.destroy();
+        window.radarChartInstance = new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: domains,
+                datasets: [{
+                    label: '各能力域综合成熟度 (0~1)',
+                    data: domains.map(d => domainScores[d]),
+                    backgroundColor: 'rgba(44,125,160,0.2)',
+                    borderColor: '#2c7da0',
+                    pointBackgroundColor: '#1f6e8c',
+                    pointBorderColor: '#fff'
+                }]
+            },
+            options: { scales: { r: { min: 0, max: 1, ticks: { stepSize: 0.2 } } } }
+        });
+        return domainScores;
+    }
+
+    function showResults() {
+        // 检查漏选
+        const missing = getMissingItems();
+        if (missing.length > 0) {
+            let msg = `您有 ${missing.length} 项评估要求未选择，请完成所有必选项后再提交。\n`;
+            const sample = missing.slice(0, 5);
+            sample.forEach(m => {
+                msg += `- ${m.domain} / ${m.sub} / ${m.level} : ${m.text.substring(0, 60)}...\n`;
+            });
+            if (missing.length > 5) msg += `... 等共${missing.length}项未选。`;
+            alert(msg);
+            // 滚动到第一个未选项
+            const firstName = missing[0].name;
+            const firstRadio = document.querySelector(`input[name="${firstName}"]`);
+            if (firstRadio) {
+                firstRadio.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstRadio.parentElement.style.backgroundColor = '#fff0f0';
+                setTimeout(() => { firstRadio.parentElement.style.backgroundColor = ''; }, 2000);
+            }
+            return;
+        }
+
+        const scores = calculateScores();
+        const { finalScore, grade, levelDetails } = computeTotalGrade(scores);
+        const domainScores = renderRadar(scores);
+        document.getElementById('resultArea').style.display = 'block';
+        document.getElementById('levelText').innerHTML = `就绪度等级：${grade} &nbsp; <span style="font-size:1rem;">总分: ${finalScore.toFixed(2)} / 5</span>`;
+        let detailHtml = `<div class="summary-score"><strong>各等级累计得分:</strong><br> L1: ${levelDetails.L1.toFixed(2)} | L2: ${levelDetails.L2.toFixed(2)} | L3: ${levelDetails.L3.toFixed(2)} | L4: ${levelDetails.L4.toFixed(2)} | L5: ${levelDetails.L5.toFixed(2)}<br>
+        <strong>能力域综合分(0~1):</strong> 资源:${domainScores['资源'].toFixed(2)} 应用:${domainScores['应用'].toFixed(2)} 管理:${domainScores['管理'].toFixed(2)} 效益:${domainScores['效益'].toFixed(2)}</div>`;
+        document.getElementById('scoreDetail').innerHTML = detailHtml;
+        let rec = "";
+        if (grade === "L1 起始级") rec = "建议加强人工智能资源投入，启动试点场景，建立数据管理基础。";
+        else if (grade === "L2 应用级") rec = "可扩展部门级应用，建设统一平台，完善人工智能战略与管理制度。";
+        else if (grade === "L3 协同级") rec = "强化跨部门协同与平台能力，推进全企业智能化集成，量化效益指标。";
+        else if (grade === "L4 企业级") rec = "持续优化全企业智能化能力，输出最佳实践，引领产业链升级。";
+        else rec = "已达到推广级，建议带动上下游生态共享能力，主导标准制定，提升行业影响力。";
+        document.getElementById('recommend').innerHTML = `<i class="fas fa-lightbulb"></i> 改进建议: ${rec}`;
+        window.scrollTo({ top: document.getElementById('resultArea').offsetTop - 20, behavior: 'smooth' });
+    }
+
+    buildSurvey();
+    document.getElementById('evaluateBtn').addEventListener('click', showResults);
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</body>
+</html>
